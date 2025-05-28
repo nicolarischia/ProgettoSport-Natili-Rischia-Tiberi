@@ -1,0 +1,80 @@
+:root {
+  font-family: 'Titillium Web', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* F1 inspired color palette */
+  --f1-black: #121212;
+  --f1-dark-grey: #333333;
+  --f1-red: #E10600;
+  --f1-white: #FFFFFF;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--f1-black);
+  font-family: var(--font-family-sans-serif);
+  background-image: url('/src/assets/f1-background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--f1-white);
+  font-family: 'Titillium Web', sans-serif; /* Ensure Titillium Web for headings */
+  font-weight: 600; /* Make headings semi-bold */
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7); /* Overlay scuro per migliorare la leggibilità */
+}
+
+.main-content {
+  flex: 1;
+  padding: 24px;
+  background-color: transparent; /* Rimuoviamo il background bianco */
+}
+
+/* Stili per i grafici */
+canvas {
+  max-height: 400px !important;
+  background-color: rgba(255, 255, 255, 0.9); /* Sfondo semi-trasparente per i grafici */
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* Stili per le card dei piloti */
+.driver-card {
+  transition: transform 0.2s ease-in-out;
+  background-color: rgba(255, 255, 255, 0.9) !important; /* Sfondo semi-trasparente per le card */
+}
+
+.driver-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Stili per le tabelle */
+.MuiTableRow-root:hover {
+  background-color: rgba(225, 6, 0, 0.04);
+}
+
+.MuiPaper-root {
+}
+
+a {
+  color: var(--f1-red);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+} 
