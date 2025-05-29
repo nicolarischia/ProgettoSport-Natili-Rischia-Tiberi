@@ -1,3 +1,5 @@
+![mockup_iniziale](https://github.com/user-attachments/assets/fe707b60-79fc-44e6-980d-705cbbe16c1c)
+
 # Relazione Tecnica Backend
 
 ## Tecnologie Utilizzate
