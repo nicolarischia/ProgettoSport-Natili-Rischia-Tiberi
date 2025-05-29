@@ -1,5 +1,75 @@
 ![mockup_iniziale](https://github.com/user-attachments/assets/fe707b60-79fc-44e6-980d-705cbbe16c1c)
 
+
+# Relazione Tecnica Frontend - F1 Analytics
+
+## 1. Panoramica del Progetto
+Il frontend dell'applicazione F1 Analytics è stato sviluppato utilizzando React.js come framework principale, con Vite come build tool. L'applicazione è stata progettata per fornire un'interfaccia utente moderna e reattiva per l'analisi dei dati della Formula 1.
+
+## 2. Stack Tecnologico
+- **Framework**: React.js 18.2.0
+- **Build Tool**: Vite 5.0.0
+- **UI Framework**: Material-UI (MUI) 5.14.18
+- **Routing**: React Router DOM 6.19.0
+- **Gestione delle Richieste HTTP**: Axios 1.6.2
+- **Visualizzazione Dati**: Chart.js 4.4.0 con react-chartjs-2 5.2.0
+
+## 3. Struttura del Progetto
+```
+client/
+├── src/
+│   ├── assets/         # Risorse statiche
+│   ├── components/     # Componenti riutilizzabili
+│   ├── context/        # Context API per la gestione dello stato globale
+│   ├── pages/          # Componenti delle pagine principali
+│   ├── services/       # Servizi per le chiamate API
+│   ├── styles/         # File CSS e stili
+│   ├── utils/          # Funzioni di utilità
+│   ├── App.jsx         # Componente principale
+│   ├── main.jsx        # Punto di ingresso dell'applicazione
+│   └── index.css       # Stili globali
+├── public/             # File pubblici
+└── package.json        # Dipendenze e configurazione
+```
+
+## 4. Architettura
+L'applicazione segue un'architettura basata su componenti, organizzata in modo modulare per garantire manutenibilità e scalabilità:
+
+- **Componenti**: Implementati come componenti funzionali React con hooks
+- **Gestione dello Stato**: Utilizzo di Context API per lo stato globale
+- **Routing**: Implementato con React Router per la navigazione tra le pagine
+- **UI/UX**: Material-UI per un'interfaccia utente coerente e responsive
+
+## 5. Funzionalità Principali
+- Visualizzazione dati in tempo reale
+- Grafici interattivi per l'analisi dei dati
+- Navigazione intuitiva tra le diverse sezioni
+- Interfaccia responsive per diversi dispositivi
+
+## 6. Performance e Ottimizzazione
+- Utilizzo di Vite per build veloci e ottimizzate
+- Lazy loading dei componenti per migliorare i tempi di caricamento
+- Ottimizzazione delle immagini e delle risorse statiche
+
+## 7. Sicurezza
+- Implementazione di best practices per la sicurezza frontend
+- Gestione sicura delle chiamate API
+- Validazione dei dati lato client
+
+## 8. Manutenibilità
+- Codice organizzato in moduli riutilizzabili
+- Documentazione inline del codice
+- Struttura delle cartelle chiara e intuitiva
+
+## 9. Sviluppi Futuri
+- Implementazione di test automatizzati
+- Miglioramento dell'accessibilità
+- Ottimizzazione delle performance per dispositivi mobili
+
+## 10. Conclusioni
+Il frontend dell'applicazione F1 Analytics è stato sviluppato seguendo le best practices moderne dello sviluppo web, utilizzando tecnologie all'avanguardia e mantenendo un focus sulla user experience e le performance. 
+
+
 # Relazione Tecnica Backend
 
 ## Tecnologie Utilizzate
