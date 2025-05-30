@@ -125,13 +125,35 @@ function Dashboard() {
   }, [targetRace]);
 
   const performanceData = {
-    labels: races.slice(0, 5).map(race => race.name),
+    labels: ['Bahrain', 'Saudi', 'Australia', 'Japan', 'China', 'Miami'],
     datasets: [
       {
-        label: 'Tempi sul giro',
-        data: [85.4, 84.9, 85.1, 84.7, 85.2],
-        borderColor: '#E10600',
-        tension: 0.1
+        label: 'Pilota 1 (Blu)',
+        data: [26, 26, 26, 26, 18, 26],
+        borderColor: '#1f77b4',
+        tension: 0.4,
+        pointBackgroundColor: '#1f77b4'
+      },
+      {
+        label: 'Pilota 2 (Rosso)',
+        data: [18, 18, 15, 18, 26, 18],
+        borderColor: '#d62728',
+        tension: 0.4,
+        pointBackgroundColor: '#d62728'
+      },
+      {
+        label: 'Pilota 3 (Verde)',
+        data: [15, 12, 18, 15, 15, 15],
+        borderColor: '#2ca02c',
+        tension: 0.4,
+        pointBackgroundColor: '#2ca02c'
+      },
+      {
+        label: 'Pilota 4 (Viola)',
+        data: [12, 9, 12, 12, 12, 12],
+        borderColor: '#9467bd',
+        tension: 0.4,
+        pointBackgroundColor: '#9467bd'
       }
     ]
   };
@@ -144,7 +166,7 @@ function Dashboard() {
       },
       title: {
         display: true,
-        text: 'Analisi Prestazioni'
+        text: 'Trend Performance Piloti - Punti per gara - Stagione 2024'
       }
     }
   };
@@ -207,7 +229,7 @@ function Dashboard() {
         </Grid>
 
         {/* Grafico prestazioni */}
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={18}>
           <Paper sx={{ p: 2 }}>
             <Line options={options} data={performanceData} />
           </Paper>
