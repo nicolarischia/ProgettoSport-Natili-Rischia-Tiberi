@@ -30,7 +30,7 @@ F1 Analytics si propone di risolvere questi problemi attraverso:
 
 ### Credenziali Amministratore
 email: admin@formula1.com
-passoword: admin
+password: admin
 
 ---
 
