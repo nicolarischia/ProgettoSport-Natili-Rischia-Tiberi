@@ -176,6 +176,7 @@ L'applicazione segue un'architettura basata su componenti, organizzata in modo m
 ## 7. Conclusioni
 Il frontend dell'applicazione F1 Analytics è stato sviluppato seguendo le best practices moderne dello sviluppo web, utilizzando tecnologie all'avanguardia e mantenendo un focus sulla user experience e le performance. L'architettura modulare e la struttura del codice permettono una facile manutenzione e scalabilità del progetto. 
 
+---
 
 # Relazione Tecnica Backend
 
