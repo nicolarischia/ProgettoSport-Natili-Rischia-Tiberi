@@ -1,7 +1,36 @@
 ![mockup_iniziale](https://github.com/user-attachments/assets/fe707b60-79fc-44e6-980d-705cbbe16c1c)
 
+# F1 - Analytics
 
-# Relazione Tecnica Frontend - F1 Analytics
+### Autori
+- [Nicola Rischia] - Frontend
+- [Filippo Tiberi] - Backend
+- [Edoardo Natili] - Gestione dati e database
+
+---
+
+## Introduzione
+
+F1 Analytics è un'applicazione web moderna progettata per fornire analisi approfondite e visualizzazioni interattive dei dati della Formula 1. Il progetto nasce dall'esigenza di offrire agli appassionati e agli analisti del motorsport uno strumento completo per l'analisi delle performance, delle statistiche e delle tendenze nel mondo della Formula 1.
+
+### Descrizione del Problema
+
+Il mondo della Formula 1 genera una quantità enorme di dati durante ogni gara, test e sessione di qualifica. Questi dati, sebbene disponibili, sono spesso:
+- Dispersi in diverse fonti
+- Presentati in formati non facilmente analizzabili
+- Difficili da correlare e visualizzare in modo efficace
+- Non facilmente accessibili in tempo reale
+
+F1 Analytics si propone di risolvere questi problemi attraverso:
+1. **Centralizzazione dei Dati**: Aggregazione di dati provenienti da diverse fonti in un'unica piattaforma
+2. **Visualizzazione Interattiva**: Presentazione dei dati attraverso grafici e dashboard interattive
+3. **Analisi in Tempo Reale**: Monitoraggio live delle performance durante le sessioni
+4. **Personalizzazione**: Possibilità per gli utenti di creare e salvare le proprie analisi
+5. **Accessibilità**: Interfaccia intuitiva e responsive per tutti i dispositivi
+
+---
+
+# Relazione Tecnica Frontend
 
 ## 1. Panoramica del Progetto
 Il frontend dell'applicazione F1 Analytics è stato sviluppato utilizzando React.js come framework principale, con Vite come build tool. L'applicazione è stata progettata per fornire un'interfaccia utente moderna e reattiva per l'analisi dei dati della Formula 1.
@@ -38,33 +67,16 @@ Il frontend dell'applicazione F1 Analytics è stato sviluppato utilizzando React
 client/
 ├── src/
 │   ├── assets/         # Risorse statiche
-│   │   ├── images/     # Immagini e icone
-│   │   └── fonts/      # Font personalizzati
 │   ├── components/     # Componenti riutilizzabili
-│   │   ├── common/     # Componenti di base (Button, Input, etc.)
-│   │   ├── layout/     # Componenti di layout (Header, Footer, etc.)
-│   │   └── charts/     # Componenti per la visualizzazione dati
 │   ├── context/        # Context API per la gestione dello stato globale
-│   │   ├── AuthContext.jsx    # Gestione autenticazione
-│   │   └── ThemeContext.jsx   # Gestione tema
 │   ├── pages/          # Componenti delle pagine principali
-│   │   ├── Dashboard/  # Dashboard principale
-│   │   ├── Analysis/   # Pagine di analisi
-│   │   └── Settings/   # Configurazioni utente
+│   │   ├── admin/      # Pagine amministrative
+│   │   └── ...         # Altre pagine
 │   ├── services/       # Servizi per le chiamate API
-│   │   ├── api.js      # Configurazione Axios
-│   │   └── endpoints/  # Definizione degli endpoint
 │   ├── styles/         # File CSS e stili
-│   │   ├── theme.js    # Configurazione tema MUI
-│   │   └── global.css  # Stili globali
 │   ├── utils/          # Funzioni di utilità
-│   │   ├── formatters.js  # Formattazione dati
-│   │   └── validators.js  # Validazione input
 │   ├── App.jsx         # Componente principale
-│   ├── main.jsx        # Punto di ingresso dell'applicazione
-│   └── index.css       # Stili globali
-├── public/             # File pubblici
-└── package.json        # Dipendenze e configurazione
+│   └── main.jsx        # Punto di ingresso
 ```
 
 ## 4. Architettura
@@ -94,99 +106,77 @@ L'applicazione segue un'architettura basata su componenti, organizzata in modo m
   - Spacing system
 
 ## 5. Funzionalità Principali
-### 5.1 Visualizzazione Dati
-- Grafici in tempo reale con aggiornamenti automatici
-- Filtri avanzati per l'analisi dei dati
-- Esportazione dati in vari formati (CSV, PDF)
-- Dashboard personalizzabili
+### 5.1 Autenticazione e Autorizzazione
+- Login e registrazione utenti
+- Protezione delle rotte per utenti autenticati
+- Gestione ruoli (utente/admin)
+- Persistenza della sessione
 
-### 5.2 Interattività
-- Drag and drop per la personalizzazione layout
-- Zoom e pan sui grafici
-- Tooltip informativi
-- Animazioni fluide
+### 5.2 Dashboard Principale
+- Visualizzazione overview delle statistiche
+- Accesso rapido alle funzionalità principali
+- Layout responsive e moderno
 
-### 5.3 Responsive Design
-- Layout adattivo per tutti i dispositivi
-- Breakpoints ottimizzati
-- Touch-friendly per dispositivi mobili
+### 5.3 Gestione Piloti
+- Visualizzazione lista piloti
+- Statistiche dettagliate per pilota
+- Gestione amministrativa dei piloti
 
-## 6. Performance e Ottimizzazione
-### 6.1 Build e Bundle
-- Utilizzo di Vite per build veloci e ottimizzate
-  - Code splitting automatico
-  - Tree shaking per ridurre il bundle size
-  - Compressione dei assets
+### 5.4 Gestione Gare
+- Lista delle gare
+- Dettagli e statistiche per gara
+- Storico risultati
 
-### 6.2 Lazy Loading
-- Caricamento dinamico dei componenti
-- Prefetching delle route più utilizzate
-- Ottimizzazione delle immagini con lazy loading
+### 5.5 Statistiche
+- Visualizzazione dati statistici
+- Grafici e analisi
+- Filtri e ricerca
 
-### 6.3 Caching
-- Implementazione di service workers
-- Cache strategica per le risorse statiche
-- Gestione efficiente della memoria
+### 5.6 Predizioni
+- Sistema di predizione risultati
+- Storico predizioni
+- Gestione amministrativa delle predizioni
 
-## 7. Sicurezza
-### 7.1 Best Practices
-- Implementazione di best practices per la sicurezza frontend
-  - Sanitizzazione degli input
-  - Protezione contro XSS
-  - CSRF tokens
+### 5.7 Gestione Scuderie
+- Lista scuderie
+- Statistiche per scuderia
+- Gestione amministrativa
 
-### 7.2 API Security
-- Gestione sicura delle chiamate API
-  - Interceptors per l'autenticazione
-  - Rate limiting
-  - Gestione degli errori
+### 5.8 Pannello Amministratore
+- Dashboard admin
+- Gestione utenti
+- Gestione contenuti
+- Monitoraggio sistema
 
-### 7.3 Data Validation
-- Validazione dei dati lato client
-  - Schema validation con Yup
-  - Form validation
-  - Error handling
+## 6. Sicurezza e Performance
+### 6.1 Sicurezza
+- Implementazione di rotte protette
+- Gestione ruoli utente
+- Validazione input
+- Protezione delle API
 
-## 8. Manutenibilità
-### 8.1 Code Organization
-- Codice organizzato in moduli riutilizzabili
-  - Principio di responsabilità singola
-  - DRY (Don't Repeat Yourself)
-  - KISS (Keep It Simple, Stupid)
+### 6.2 Performance
+- Lazy loading dei componenti
+- Ottimizzazione delle immagini
+- Caching delle richieste
+- Gestione efficiente dello stato
 
-### 8.2 Documentation
-- Documentazione inline del codice
-  - JSDoc per funzioni e componenti
-  - Storybook per i componenti UI
-  - README dettagliati
+### 6.3 Manutenibilità
+- Codice modulare e riutilizzabile
+- Struttura delle cartelle chiara
+- Documentazione inline
+- Separazione delle responsabilità
 
-### 8.3 Testing
-- Unit testing con Jest
-- Integration testing con React Testing Library
-- E2E testing con Cypress
-
-## 9. Sviluppi Futuri
-### 9.1 Testing
+### 6.4 Sviluppi Futuri
+- Miglioramento delle performance
+- Aggiunta di nuove funzionalità statistiche
+- Ottimizzazione mobile
 - Implementazione di test automatizzati
-  - Aumento della coverage
-  - Test di performance
-  - Test di accessibilità
 
-### 9.2 Accessibility
-- Miglioramento dell'accessibilità
-  - WCAG 2.1 compliance
-  - Screen reader support
-  - Keyboard navigation
-
-### 9.3 Mobile Optimization
-- Ottimizzazione delle performance per dispositivi mobili
-  - PWA support
-  - Offline capabilities
-  - Touch gestures
-
-## 10. Conclusioni
+## 7. Conclusioni
 Il frontend dell'applicazione F1 Analytics è stato sviluppato seguendo le best practices moderne dello sviluppo web, utilizzando tecnologie all'avanguardia e mantenendo un focus sulla user experience e le performance. L'architettura modulare e la struttura del codice permettono una facile manutenzione e scalabilità del progetto. 
 
+---
 
 # Relazione Tecnica Backend
 
