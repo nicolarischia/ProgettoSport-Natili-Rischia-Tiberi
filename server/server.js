@@ -113,7 +113,7 @@ app.post('/api/login', async (req, res) => {
 
         // Genera il token JWT
         const token = jwt.sign(
-            { userId: user._id, username: user.username },
+            { userId: user._id, username: user.username, isAdmin: user.isAdmin },
             JWT_SECRET,
             { expiresIn: '24h' }
         );
@@ -123,7 +123,8 @@ app.post('/api/login', async (req, res) => {
             token,
             user: {
                 username: user.username,
-                email: user.email
+                email: user.email,
+                isAdmin: user.isAdmin
             }
         });
     } catch (error) {
@@ -240,28 +241,105 @@ app.get('/api/driver-stats/:driverId', async (req, res) => {
 app.get('/api/race-results/:sessionId', async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const response = await axios.get(`https://api.openf1.org/v1/position?session_key=${sessionId}`);
         
-        // Formatta i dati dei risultati
-        const formattedResults = response.data
-            .filter(result => result.position) // Filtra solo i risultati con una posizione valida
-            .map(result => ({
-                driver_number: result.driver_number,
-                driver_name: result.driver_name || `Pilota ${result.driver_number}`,
-                team_name: result.team_name || 'Scuderia non specificata',
-                position: result.position,
-                time: result.time ? formatTime(result.time) : 'DNF',
-                gap: result.gap || '-',
-                points: calculatePoints(result.position)
-            }))
-            .sort((a, b) => a.position - b.position); // Ordina per posizione
+        // Ottieni i dati delle posizioni
+        const positionResponse = await axios.get(`https://api.openf1.org/v1/position?session_key=${sessionId}`);
         
-        res.json(formattedResults);
+        // Ottieni i dati dei giri
+        const lapsResponse = await axios.get(`https://api.openf1.org/v1/laps?session_key=${sessionId}`);
+        
+        // Calcola i tempi totali per ogni pilota
+        const driverTimes = lapsResponse.data.reduce((acc, lap) => {
+            if (lap.lap_duration) {
+                if (!acc[lap.driver_number]) {
+                    acc[lap.driver_number] = 0;
+                }
+                acc[lap.driver_number] += lap.lap_duration;
+            }
+            return acc;
+        }, {});
+        
+        // Raggruppa i dati per pilota e ottieni l'ultima posizione di ogni pilota
+        const driverResults = positionResponse.data.reduce((acc, position) => {
+            if (!acc[position.driver_number] || position.date > acc[position.driver_number].date) {
+                // Determina lo stato del pilota
+                const status = position.status || 'Finished';
+                const isDNF = status.includes('DNF') || status.includes('Retired') || status.includes('Accident');
+                
+                // Determina il tempo
+                let time = '00:00.000';
+                if (driverTimes[position.driver_number]) {
+                    time = formatTime(driverTimes[position.driver_number]);
+                } else if (position.time) {
+                    time = formatTime(position.time);
+                }
+
+                acc[position.driver_number] = {
+                    driver_number: position.driver_number,
+                    driver_name: position.driver_name || `Pilota ${position.driver_number}`,
+                    team_name: position.team_name || getTeamName(position.driver_number),
+                    position: position.position || 0,
+                    time: time,
+                    gap: '-', // Verrà calcolato dopo
+                    points: calculatePoints(position.position || 0),
+                    date: position.date,
+                    status: status,
+                    total_time: driverTimes[position.driver_number] || 0
+                };
+            }
+            return acc;
+        }, {});
+
+        // Calcola i gap rispetto al leader
+        const resultsArray = Object.values(driverResults).sort((a, b) => a.position - b.position);
+        const leaderTime = resultsArray[0]?.total_time || 0;
+
+        // Aggiorna i gap
+        resultsArray.forEach((result, index) => {
+            if (index === 0) {
+                result.gap = '-'; // Il leader non ha gap
+            } else if (result.total_time > 0) {
+                const gap = result.total_time - leaderTime;
+                result.gap = formatTime(gap);
+            }
+        });
+        
+        res.json(resultsArray);
     } catch (error) {
         console.error('Errore nel recupero dei risultati della gara:', error);
         res.status(500).json({ error: 'Errore nel recupero dei risultati della gara' });
     }
 });
+
+// Funzione per ottenere il nome della scuderia in base al numero del pilota
+function getTeamName(driverNumber) {
+    const teamMap = {
+        1: 'Red Bull Racing',
+        2: 'Red Bull Racing',
+        3: 'McLaren',
+        4: 'McLaren',
+        5: 'Aston Martin',
+        6: 'Aston Martin',
+        10: 'Alpine',
+        11: 'Alpine',
+        14: 'Aston Martin',
+        16: 'Williams',
+        18: 'Aston Martin',
+        20: 'Haas F1 Team',
+        21: 'Haas F1 Team',
+        22: 'AlphaTauri',
+        23: 'Williams',
+        27: 'Haas F1 Team',
+        31: 'Alpine',
+        44: 'Mercedes',
+        55: 'Ferrari',
+        63: 'Mercedes',
+        77: 'Alfa Romeo',
+        81: 'McLaren',
+        87: 'Williams'
+    };
+    return teamMap[driverNumber] || 'Scuderia non specificata';
+}
 
 // Rotte per i team
 app.use('/api/teams', teamRoutes);
@@ -302,7 +380,7 @@ app.post('/api/predictions', authenticateToken, async (req, res) => {
         const userId = req.user.userId;
 
         const prediction = {
-            userId,
+            userId: new ObjectId(userId), // Converti l'ID utente in ObjectId
             race,
             driver,
             position,
@@ -310,8 +388,8 @@ app.post('/api/predictions', authenticateToken, async (req, res) => {
             createdAt: new Date()
         };
 
-        await db.collection('predictions').insertOne(prediction);
-        res.status(201).json(prediction);
+        const result = await db.collection('predictions').insertOne(prediction);
+        res.status(201).json({ ...prediction, _id: result.insertedId });
     } catch (error) {
         console.error('Errore nel salvataggio della predizione:', error);
         res.status(500).json({ error: 'Errore nel salvataggio della predizione' });
@@ -322,23 +400,37 @@ app.post('/api/predictions', authenticateToken, async (req, res) => {
 app.get('/api/predictions/my-predictions', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;
+        console.log('Recupero predizioni per userId:', userId);
+
+        // Converti l'ID utente in ObjectId
+        const userObjectId = new ObjectId(userId);
+        console.log('ObjectId convertito:', userObjectId);
+
         const predictions = await db.collection('predictions')
-            .find({ userId })
+            .find({ userId: userObjectId })
             .sort({ createdAt: -1 })
             .toArray();
+
+        console.log('Predizioni trovate:', predictions.length);
         res.json(predictions);
     } catch (error) {
-        console.error('Errore nel recupero delle predizioni:', error);
-        res.status(500).json({ error: 'Errore nel recupero delle predizioni' });
+        console.error('Errore dettagliato nel recupero delle predizioni:', error);
+        res.status(500).json({ 
+            error: 'Errore nel recupero delle predizioni',
+            details: error.message 
+        });
     }
 });
 
 // Ottieni una predizione specifica
 app.get('/api/predictions/:id', authenticateToken, async (req, res) => {
     try {
+        const userId = new ObjectId(req.user.userId);
+        const predictionId = new ObjectId(req.params.id);
+
         const prediction = await db.collection('predictions').findOne({
-            _id: new ObjectId(req.params.id),
-            userId: req.user.userId
+            _id: predictionId,
+            userId: userId
         });
 
         if (!prediction) {
@@ -356,10 +448,13 @@ app.get('/api/predictions/:id', authenticateToken, async (req, res) => {
 app.put('/api/predictions/:id', authenticateToken, async (req, res) => {
     try {
         const { race, driver, position, notes } = req.body;
+        const userId = new ObjectId(req.user.userId);
+        const predictionId = new ObjectId(req.params.id);
+
         const result = await db.collection('predictions').findOneAndUpdate(
             {
-                _id: new ObjectId(req.params.id),
-                userId: req.user.userId
+                _id: predictionId,
+                userId: userId
             },
             {
                 $set: {
@@ -387,9 +482,12 @@ app.put('/api/predictions/:id', authenticateToken, async (req, res) => {
 // Elimina una predizione
 app.delete('/api/predictions/:id', authenticateToken, async (req, res) => {
     try {
+        const userId = new ObjectId(req.user.userId);
+        const predictionId = new ObjectId(req.params.id);
+
         const result = await db.collection('predictions').findOneAndDelete({
-            _id: new ObjectId(req.params.id),
-            userId: req.user.userId
+            _id: predictionId,
+            userId: userId
         });
 
         if (!result.value) {
@@ -462,12 +560,332 @@ app.post('/api/change-password', authenticateToken, async (req, res) => {
     }
 });
 
+// Endpoint per ottenere tutti gli utenti (solo per admin)
+app.get('/api/users', authenticateToken, async (req, res) => {
+    try {
+        // Verifica che l'utente sia admin
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Accesso non autorizzato' });
+        }
+
+        const users = await db.collection('users').find(
+            {},
+            { projection: { password: 0 } } // Esclude la password dalla risposta
+        ).toArray();
+
+        res.json(users);
+    } catch (error) {
+        console.error('Errore nel recupero degli utenti:', error);
+        res.status(500).json({ error: 'Errore nel recupero degli utenti' });
+    }
+});
+
+// Endpoint per aggiornare un utente (solo per admin)
+app.put('/api/users/:id', authenticateToken, async (req, res) => {
+    try {
+        // Verifica che l'utente sia admin
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Accesso non autorizzato' });
+        }
+
+        const { username, email, isAdmin } = req.body;
+        const userId = new ObjectId(req.params.id);
+
+        // Verifica se l'email è già in uso da un altro utente
+        const existingUser = await db.collection('users').findOne({
+            email,
+            _id: { $ne: userId }
+        });
+
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email già in uso' });
+        }
+
+        // Aggiorna l'utente
+        const result = await db.collection('users').findOneAndUpdate(
+            { _id: userId },
+            {
+                $set: {
+                    username,
+                    email,
+                    isAdmin,
+                    updatedAt: new Date()
+                }
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (!result.value) {
+            return res.status(404).json({ error: 'Utente non trovato' });
+        }
+
+        // Rimuovi la password dalla risposta
+        const { password, ...userWithoutPassword } = result.value;
+        res.json(userWithoutPassword);
+    } catch (error) {
+        console.error('Errore nell\'aggiornamento dell\'utente:', error);
+        res.status(500).json({ error: 'Errore nell\'aggiornamento dell\'utente' });
+    }
+});
+
+// Endpoint per eliminare un utente (solo per admin)
+app.delete('/api/users/:id', authenticateToken, async (req, res) => {
+    try {
+        // Verifica che l'utente sia admin
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Accesso non autorizzato' });
+        }
+
+        const userId = new ObjectId(req.params.id);
+
+        // Non permettere l'eliminazione dell'utente admin principale
+        const user = await db.collection('users').findOne({ _id: userId });
+        if (user && user.email === 'admin@formula1.com') {
+            return res.status(403).json({ error: 'Non è possibile eliminare l\'utente admin principale' });
+        }
+
+        // Elimina l'utente
+        const result = await db.collection('users').findOneAndDelete({ _id: userId });
+
+        if (!result.value) {
+            return res.status(404).json({ error: 'Utente non trovato' });
+        }
+
+        // Elimina anche le predizioni dell'utente
+        await db.collection('predictions').deleteMany({ userId: userId });
+
+        res.json({ message: 'Utente eliminato con successo' });
+    } catch (error) {
+        console.error('Errore nell\'eliminazione dell\'utente:', error);
+        res.status(500).json({ error: 'Errore nell\'eliminazione dell\'utente' });
+    }
+});
+
+// Endpoint per ottenere tutte le predizioni (solo per admin)
+app.get('/api/predictions', authenticateToken, async (req, res) => {
+    try {
+        // Verifica che l'utente sia admin
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Accesso non autorizzato' });
+        }
+
+        // Recupera tutte le predizioni con i dettagli degli utenti
+        const predictions = await db.collection('predictions')
+            .aggregate([
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'userId',
+                        foreignField: '_id',
+                        as: 'user'
+                    }
+                },
+                {
+                    $unwind: '$user'
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        race: 1,
+                        driver: 1,
+                        position: 1,
+                        notes: 1,
+                        createdAt: 1,
+                        'user.username': 1,
+                        'user.email': 1
+                    }
+                },
+                {
+                    $sort: { createdAt: -1 }
+                }
+            ]).toArray();
+
+        res.json(predictions);
+    } catch (error) {
+        console.error('Errore nel recupero delle predizioni:', error);
+        res.status(500).json({ error: 'Errore nel recupero delle predizioni' });
+    }
+});
+
+// Endpoint per aggiungere un nuovo pilota
+app.post('/api/drivers', authenticateToken, async (req, res) => {
+    try {
+        // Verifica che l'utente sia admin
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Accesso non autorizzato' });
+        }
+
+        const { 
+            driver_id, 
+            driver_number, 
+            name, 
+            team_name, 
+            team_color, 
+            stats // Rimuovi nationality e date_of_birth
+        } = req.body;
+
+        // Crea il nuovo pilota
+        const newDriver = {
+            // _id verrà generato automaticamente da MongoDB se non specificato
+            driver_id: parseInt(driver_id) || null, // Assicurati che sia un numero
+            driver_number: parseInt(driver_number) || null,
+            name,
+            team_name,
+            team_color,
+            stats: {
+                points: parseInt(stats?.points) || 0,
+                wins: parseInt(stats?.wins) || 0,
+                podiums: parseInt(stats?.podiums) || 0,
+                fastest_laps: parseInt(stats?.fastest_laps) || 0,
+                // avg_position non è nel frontend, lo impostiamo di default o lo gestiamo diversamente se necessario
+                avg_position: parseFloat(stats?.avg_position) || 0
+            },
+            last_updated: new Date()
+        };
+
+        // Inserisci il nuovo pilota
+        const result = await db.collection('Drivers').insertOne(newDriver);
+
+        // Restituisci il pilota inserito con l'_id generato
+        res.status(201).json({ ...newDriver, _id: result.insertedId });
+    } catch (error) {
+        console.error('Errore nell\'aggiunta del pilota:', error);
+        res.status(500).json({ error: 'Errore nell\'aggiunta del pilota' });
+    }
+});
+
+// Endpoint per modificare un pilota esistente
+app.put('/api/drivers/:id', authenticateToken, async (req, res) => {
+    try {
+        // Verifica che l'utente sia admin
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Accesso non autorizzato' });
+        }
+
+        // Usa driver_id dall'URL e convertilo in numero
+        const driverId = parseInt(req.params.id);
+        console.log('ID pilota ricevuto:', driverId);
+
+        // Verifica se l'ID è un numero valido
+        if (isNaN(driverId)) {
+            return res.status(400).json({ error: 'ID pilota non valido' });
+        }
+
+        const { 
+            driver_number, 
+            name, 
+            team_name, 
+            team_color, 
+            stats
+        } = req.body;
+
+        console.log('Dati ricevuti:', req.body);
+
+        // Costruisci l'oggetto di aggiornamento
+        const updateData = {
+            driver_number: parseInt(driver_number) || null,
+            name,
+            team_name,
+            team_color,
+            last_updated: new Date()
+        };
+
+        // Aggiungi o aggiorna i campi stats se presenti
+        if (stats) {
+            updateData.stats = {
+                points: parseInt(stats.points) || 0,
+                wins: parseInt(stats.wins) || 0,
+                podiums: parseInt(stats.podiums) || 0,
+                fastest_laps: parseInt(stats.fastest_laps) || 0,
+                avg_position: parseFloat(stats.avg_position) || 0
+            };
+        }
+
+        console.log('Dati di aggiornamento:', updateData);
+
+        // Prima verifica se il pilota esiste
+        const existingDriver = await db.collection('Drivers').findOne({ driver_id: driverId });
+        console.log('Pilota esistente:', existingDriver);
+
+        if (!existingDriver) {
+            return res.status(404).json({ error: 'Pilota non trovato' });
+        }
+
+        // Trova e aggiorna il pilota per driver_id
+        const result = await db.collection('Drivers').findOneAndUpdate(
+            { driver_id: driverId },
+            { $set: updateData },
+            { returnDocument: 'after' }
+        );
+
+        if (!result.value) {
+            return res.status(404).json({ error: 'Errore nell\'aggiornamento del pilota' });
+        }
+
+        res.json(result.value);
+    } catch (error) {
+        console.error('Errore nella modifica del pilota:', error);
+        res.status(500).json({ error: 'Errore nella modifica del pilota' });
+    }
+});
+
+// Endpoint per eliminare un pilota esistente
+app.delete('/api/drivers/:id', authenticateToken, async (req, res) => {
+    try {
+        // Verifica che l'utente sia admin
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Accesso non autorizzato' });
+        }
+
+        // Usa driver_id dall'URL e convertilo in numero
+        const driverId = parseInt(req.params.id);
+
+         // Verifica se l'ID è un numero valido
+         if (isNaN(driverId)) {
+            return res.status(400).json({ error: 'ID pilota non valido' });
+        }
+
+        // Trova ed elimina il pilota per driver_id
+        const result = await db.collection('Drivers').findOneAndDelete(
+            { driver_id: driverId } // Cerca per driver_id
+        );
+
+        if (!result.value) {
+            return res.status(404).json({ error: 'Pilota non trovato' });
+        }
+
+        res.json({ message: 'Pilota eliminato con successo' });
+    } catch (error) {
+        console.error('Errore nell\'eliminazione del pilota:', error);
+        res.status(500).json({ error: 'Errore nell\'eliminazione del pilota' });
+    }
+});
+
 app.listen(port, async () => {
     try {
         db = await connessioneDb();
+        
+        // Crea l'utente admin se non esiste
+        const adminExists = await db.collection('users').findOne({ email: 'admin@formula1.com' });
+        if (!adminExists) {
+            const hashedPassword = await bcrypt.hash('admin', 10);
+            await db.collection('users').insertOne({
+                username: 'admin',
+                email: 'admin@formula1.com',
+                password: hashedPassword,
+                isAdmin: true,
+                createdAt: new Date(),
+                favorites: {
+                    drivers: [],
+                    races: []
+                }
+            });
+            console.log('Utente admin creato con successo');
+        }
+        
         console.log(`Server in esecuzione sulla porta ${port}`);
     } catch (error) {
         console.error('Errore durante l\'avvio del server:', error);
         process.exit(1);
     }
-}); 
+});
