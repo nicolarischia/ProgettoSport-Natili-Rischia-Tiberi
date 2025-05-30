@@ -28,6 +28,10 @@ F1 Analytics si propone di risolvere questi problemi attraverso:
 4. **Personalizzazione**: Possibilità per gli utenti di creare e salvare le proprie analisi
 5. **Accessibilità**: Interfaccia intuitiva e responsive per tutti i dispositivi
 
+### Credenziali Amministratore
+email: admin@formula1.com
+passoword: admin
+
 ---
 
 # Relazione Tecnica Frontend
@@ -228,3 +232,8 @@ Il backend può essere eseguito in locale o distribuito su servizi cloud come He
 
 ## Conclusioni
 Il backend è progettato per essere scalabile, sicuro e facilmente estendibile, garantendo una solida base per l'applicazione sportiva.
+
+---
+
+## Fonti Principali
+ChatGPT, Progetti svolti in classe, Esercitazioni a casa
